@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DondeMeLlega.es</title>
+    <title>DondeMeLlega.es - Mapa de Alquileres</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-
+    <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -32,7 +32,7 @@
             top: 24px; left: 24px;
             width: 360px;
             z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1); /* Animación suave estilo iOS */
+            transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
         }
 
         .card {
@@ -48,18 +48,14 @@
             gap: 16px;
         }
 
-        /* Área clickeable para colapsar (Header) */
-        .card-header {
-            cursor: pointer; /* Manita para indicar click */
-        }
+        .card-header { cursor: pointer; }
 
-        /* La barrita decorativa (Handle) */
         .drag-handle {
             width: 40px; height: 5px;
             background: #e5e7eb;
             border-radius: 10px;
-            margin: -10px auto 15px auto; /* Centrado arriba */
-            display: none; /* Oculto en PC por defecto */
+            margin: -10px auto 15px auto;
+            display: none;
         }
 
         h2 { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--primary); letter-spacing: -0.03em; }
@@ -78,6 +74,18 @@
         .limit-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: -0.03em; }
         #statusText { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 0.95rem; }
 
+        /* Footer Legal (NUEVO) */
+        .legal-footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 15px;
+        }
+        .legal-footer a { color: #9ca3af; text-decoration: none; margin: 0 5px; transition: color 0.2s; }
+        .legal-footer a:hover { color: var(--accent); text-decoration: underline; }
+
         /* Spinner */
         #loading { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 15px 30px; border-radius: 50px; box-shadow: var(--shadow); z-index: 2000; font-weight: 600; color: var(--primary); gap: 10px; align-items: center; }
         .spinner { width: 18px; height: 18px; border: 2px solid #e5e7eb; border-top: 2px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -85,33 +93,14 @@
 
         /* --- MÓVIL (BOTTOM SHEET) --- */
         @media (max-width: 768px) {
-            .ui-container {
-                top: auto; bottom: 0; left: 0; width: 100%;
-                /* Por defecto abierto, pero listo para moverse */
-            }
-
-            .card {
-                border-radius: 24px 24px 0 0; /* Solo bordes de arriba */
-                padding-bottom: 40px; /* Espacio extra para iPhone bar */
-                gap: 12px;
-            }
-
-            .drag-handle { 
-                display: block; /* Mostramos la barrita solo en móvil */
-                background: #d1d5db;
-            }
-
-            /* CLASE MÁGICA: Cuando está colapsado */
-            .ui-container.collapsed {
-                /* Bajamos todo excepto la cabecera (aprox 80px visibles) */
-                transform: translateY(calc(100% - 85px)); 
-            }
+            .ui-container { top: auto; bottom: 0; left: 0; width: 100%; }
+            .card { border-radius: 24px 24px 0 0; padding-bottom: 40px; gap: 12px; }
+            .drag-handle { display: block; background: #d1d5db; }
+            .ui-container.collapsed { transform: translateY(calc(100% - 85px)); }
+            .ui-container.collapsed .drag-handle { background: var(--accent); width: 50px; }
             
-            /* Indicador visual de que la barrita cambió de estado */
-            .ui-container.collapsed .drag-handle {
-                background: var(--accent); /* Se pone azul para invitar a subir */
-                width: 50px;
-            }
+            /* Ocultar legal en móvil cuando está colapsado para no molestar */
+            .ui-container.collapsed .legal-footer { opacity: 0; pointer-events: none; }
         }
     </style>
 </head>
@@ -123,8 +112,9 @@
         <div class="card">
             
             <div class="card-header" onclick="togglePanel()">
-                <div class="drag-handle"></div> <h2 id="mainTitle" data-provincia="">📍 España</h2>
-                <span class="subtitle">Toca aquí para ver/ocultar filtros</span>
+                <div class="drag-handle"></div>
+                <h2 id="mainTitle" data-provincia="">📍 España</h2>
+                <span class="subtitle">Toca para ver/ocultar filtros</span>
             </div>
 
             <div class="input-group">
@@ -151,6 +141,12 @@
                 <div id="statusText"><span style="color:#9ca3af">Explora el mapa...</span></div>
             </div>
 
+            <div class="legal-footer">
+                <a href="privacidad.html" target="_blank">Privacidad</a> • 
+                <a href="cookies.html" target="_blank">Cookies</a> • 
+                <span style="cursor:help" title="Datos estimados basados en Idealista 2025">© 2025</span>
+            </div>
+
         </div>
     </div>
 
@@ -159,23 +155,21 @@
     <script src="provincias.js"></script>
 
     <script>
-        // --- FUNCIÓN ACORDEÓN (MINIMIZAR/EXPANDIR) ---
+        // --- ACORDEÓN ---
         function togglePanel() {
-            // Solo actuar en móvil (ancho menor a 768px)
             if (window.innerWidth < 768) {
-                const panel = document.getElementById('panelLateral');
-                panel.classList.toggle('collapsed');
+                document.getElementById('panelLateral').classList.toggle('collapsed');
             }
         }
 
         // --- MAPA SETUP ---
         const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([40.416775, -3.703790], 6);
-        L.control.zoom({ position: 'topright' }).addTo(map); // Zoom arriba para no molestar al panel
+        L.control.zoom({ position: 'topright' }).addTo(map); 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '©CartoDB' }).addTo(map);
 
         let geoLayer, muniLayer, topoData, currentLevel = 'provincias', provinciaActivaLayer;
 
-        // DICCIONARIO INE (Resumido para el ejemplo, usa el completo)
+        // DICCIONARIO INE (¡IMPORTANTE: COMPLETO!)
         const codigosINE = {
             "Araba/Álava": "01", "Álava": "01", "Albacete": "02", "Alicante/Alacant": "03", "Alicante": "03",
             "Almería": "04", "Ávila": "05", "Badajoz": "06", "Illes Balears": "07", "Baleares": "07",
@@ -193,8 +187,8 @@
             "Ceuta": "51", "Melilla": "52"
         };
 
-        // PRECIOS (Pega tu lista completa aquí)
-        const preciosProvincias = {
+        // PRECIOS (¡PEGA TU LISTA COMPLETA AQUÍ!)
+               const preciosProvincias = {
   // --- ANDALUCÍA ---
   "Almería": 8.4,
   "Cádiz": 10.1,
@@ -274,7 +268,10 @@
   "Melilla": 10.3
 };
 
-        // LÓGICA DE NEGOCIO
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
         function getRentLimit() {
             const sal = parseFloat(document.getElementById('salary').value) || 0;
             const limit = sal * 0.35;
@@ -301,23 +298,36 @@
         function highlightFeature(e) {
             const props = e.target.feature.properties;
             const name = props.Texto || props.name || "Zona";
-            
-            // Decidir precio a mostrar
             let pShow;
-            if(currentLevel === 'provincias') pShow = preciosProvincias[name];
-            else pShow = preciosProvincias[document.getElementById('mainTitle').dataset.provincia];
+            let esEstimado = false;
 
-            const html = `<div style="font-weight:600">${name}</div>
-                          <div style="font-size:1.2rem; font-weight:800; color:${getColor(pShow, getRentLimit())}">
-                          ${pShow ? pShow + ' €/m²' : 'S/D'}</div>`;
+            if(currentLevel === 'provincias') pShow = preciosProvincias[name];
+            else {
+                pShow = preciosProvincias[document.getElementById('mainTitle').dataset.provincia];
+                esEstimado = true;
+            }
+
+            const html = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; font-size:1.1rem; color:var(--primary)">${name}</span>
+                    ${esEstimado ? '<span style="font-size:0.7rem; background:#f3f4f6; padding:2px 6px; border-radius:4px; color:#6b7280">Estimado</span>' : ''}
+                </div>
+                <div style="margin-top:4px;">
+                    <span style="font-size:1.4rem; font-weight:800; color:${getColor(pShow, getRentLimit())}">
+                        ${pShow ? pShow + '<small style="font-size:0.9rem; color:#6b7280"> €/m²</small>' : 'Sin datos'}
+                    </span>
+                </div>`;
             
             document.getElementById('statusText').innerHTML = html;
             e.target.setStyle({ weight: 3, color: '#333', fillOpacity: 0.9 });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) e.target.bringToFront();
         }
 
         function resetHighlight(e) {
-            if(currentLevel === 'provincias') geoLayer.resetStyle(e.target);
-            else muniLayer.resetStyle(e.target);
+            const layer = e.target;
+            if(currentLevel === 'provincias') geoLayer.resetStyle(layer);
+            else muniLayer.resetStyle(layer);
+            document.getElementById('statusText').innerHTML = '<span style="color:#9ca3af">Explora el mapa...</span>';
         }
 
         async function clickFeature(e) {
@@ -326,12 +336,8 @@
             const codigo = codigosINE[nombre];
 
             if(codigo) {
-                // 1. MINIMIZAR PANEL AUTOMÁTICAMENTE EN MÓVIL AL CLICAR
-                if(window.innerWidth < 768) {
-                    document.getElementById('panelLateral').classList.add('collapsed');
-                }
-
-                document.getElementById('loading').style.display = 'flex';
+                if(window.innerWidth < 768) document.getElementById('panelLateral').classList.add('collapsed');
+                showLoading(true);
                 
                 if(muniLayer) map.removeLayer(muniLayer);
                 if(provinciaActivaLayer) provinciaActivaLayer.setStyle({ opacity: 1, fillOpacity: 0.7, interactive: true });
@@ -361,11 +367,10 @@
                 }).addTo(map);
 
                 map.fitBounds(muniLayer.getBounds(), { padding: [20, 20] });
-                document.getElementById('loading').style.display = 'none';
+                showLoading(false);
             }
         }
 
-        // INIT
         geoLayer = L.geoJson(provinciasGeoJSON, {
             style: style,
             onEachFeature: (f, l) => l.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: clickFeature })
