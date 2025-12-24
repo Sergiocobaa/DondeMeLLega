@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mapa de Viabilidad de Alquiler</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+
+    <style>
+        /* --- RESET & BASICS --- */
+        :root {
+            --primary: #111827;     /* Negro suave */
+            --accent: #2563eb;      /* Azul vibrante */
+            --success: #10b981;     /* Verde moderno */
+            --danger: #ef4444;      /* Rojo moderno */
+            --surface: rgba(255, 255, 255, 0.95);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow: hidden; background: #e5e7eb; }
+        
+        /* --- MAPA FULL SCREEN --- */
+        #map { 
+            position: absolute; top: 0; bottom: 0; left: 0; right: 0; 
+            z-index: 0; 
+        }
+
+        /* --- UI FLOTANTE (ESTILO PRO) --- */
+        .ui-container {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            width: 360px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        /* Título */
+        h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.025em;
+        }
+        .subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        /* Inputs Modernos */
+        .input-group { margin-bottom: 16px; position: relative; }
+        
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            padding-right: 40px; /* Espacio para el sufijo */
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+            outline: none;
+            background: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .suffix {
+            position: absolute;
+            right: 16px;
+            color: #9ca3af;
+            font-weight: 500;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        /* Info Box / Status */
+        .status-card {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .limit-label { font-size: 0.8rem; color: #6b7280; margin-bottom: 4px; }
+        .limit-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1; }
+        
+        #statusText { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+
+        /* --- LOADING SPINNER --- */
+        #loading {
+            display: none; /* Oculto por defecto */
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.9);
+            padding: 20px 40px;
+            border-radius: 50px;
+            box-shadow: var(--shadow);
+            z-index: 2000;
+            font-weight: 600;
+            color: var(--accent);
+            align-items: center;
+            gap: 10px;
+        }
+        .spinner {
+            width: 20px; height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- MOBILE RESPONSIVE (Bottom Sheet) --- */
+        @media (max-width: 768px) {
+            .ui-container {
+                top: auto;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                padding: 0;
+                gap: 0;
+            }
+
+            .card {
+                border-radius: 24px 24px 0 0;
+                padding: 20px 24px 30px 24px;
+                box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+                border: none;
+                border-top: 1px solid rgba(255,255,255,0.5);
+            }
+
+            /* Un pequeño "handle" para indicar que se puede deslizar (decorativo) */
+            .card::before {
+                content: '';
+                display: block;
+                width: 40px;
+                height: 4px;
+                background: #e5e7eb;
+                border-radius: 2px;
+                margin: 0 auto 20px auto;
+            }
+
+            h2 { font-size: 1.1rem; }
+            .input-group { margin-bottom: 12px; }
+            input { padding: 10px 14px; font-size: 0.95rem; }
+            
+            /* Ajustar controles del mapa para que no queden tapados */
+            .leaflet-bottom { bottom: 320px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <span>Cargando mapa...</span>
+    </div>
+
+    <div class="ui-container">
+        <div class="card">
+            <h2 id="mainTitle" data-provincia="">📍 Mapa de Alquileres</h2>
+            <span class="subtitle">Descubre dónde te llega el sueldo</span>
+
+            <div class="input-group">
+                <label>Tu Sueldo Neto Mensual</label>
+                <div class="input-wrapper">
+                    <input type="number" id="salary" value="1500" placeholder="Ej: 1500">
+                    <span class="suffix">€</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Tamaño piso deseado</label>
+                <div class="input-wrapper">
+                    <input type="number" id="size" value="60" placeholder="Ej: 60">
+                    <span class="suffix">m²</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <div class="limit-label">Tu límite recomendado (35%)</div>
+                <div id="limitDisplay" class="limit-value">525€</div>
+                <div id="statusText" style="font-size: 0.9rem; line-height: 1.4;">
+                    <span style="color: #6b7280">Pasa el ratón por una zona para ver detalles...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="provincias.js"></script>
+
+    <script>
+        // 1. CONFIGURACIÓN VISUAL DEL MAPA
+        const map = L.map('map', {
+            zoomControl: false, // Ocultamos el zoom por defecto para moverlo si queremos
+            attributionControl: false // Ocultamos atribución para diseño limpio (legal: poner en pequeño)
+        }).setView([40.416775, -3.703790], 6);
+        
+        // Añadimos zoom abajo a la derecha
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        // Añadimos atribución discreta
+        L.control.attribution({ position: 'bottomright', prefix: false }).addTo(map);
+
+        // Mapa base CartoDB Voyager (Más limpio y moderno que OpenStreetMap estándar)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '©OpenStreetMap, ©CartoDB'
+        }).addTo(map);
+
+        // --- VARIABLES GLOBALES ---
+        let geoLayer, muniLayer, topoData = null, currentLevel = 'provincias';
+        let provinciaActivaLayer = null;
+        let baseDatosPrecios = {}; // Futuro uso
+
+        // 2. DICCIONARIO INE
+        const codigosINE = {
+            "Araba/Álava": "01", "Álava": "01", "Albacete": "02", "Alicante/Alacant": "03", "Alicante": "03",
+            "Almería": "04", "Ávila": "05", "Badajoz": "06", "Illes Balears": "07", "Baleares": "07",
+            "Barcelona": "08", "Burgos": "09", "Cáceres": "10", "Cádiz": "11",
+            "Castellón/Castelló": "12", "Castellón": "12", "Ciudad Real": "13", "Córdoba": "14",
+            "A Coruña": "15", "La Coruña": "15", "Cuenca": "16", "Girona": "17", "Gerona": "17",
+            "Granada": "18", "Guadalajara": "19", "Gipuzkoa": "20", "Guipúzcoa": "20",
+            "Huelva": "21", "Huesca": "22", "Jaén": "23", "León": "24", "Lleida": "25", "Lérida": "25",
+            "La Rioja": "26", "Lugo": "27", "Madrid": "28", "Málaga": "29", "Murcia": "30",
+            "Navarra": "31", "Ourense": "32", "Orense": "32", "Asturias": "33", "Palencia": "34",
+            "Las Palmas": "35", "Pontevedra": "36", "Salamanca": "37", "Santa Cruz de Tenerife": "38",
+            "Cantabria": "39", "Segovia": "40", "Sevilla": "41", "Soria": "42", "Tarragona": "43",
+            "Teruel": "44", "Toledo": "45", "Valencia/Valéncia": "46", "Valencia": "46",
+            "Valladolid": "47", "Bizkaia": "48", "Vizcaya": "48", "Zamora": "49", "Zaragoza": "50",
+            "Ceuta": "51", "Melilla": "52"
+        };
+
+        // 3. PRECIOS (TU LISTA DEBE IR AQUÍ)
+        const preciosProvincias = {
+            "Barcelona": 20.6, "Madrid": 21.0, "Valencia": 13.5, "Málaga": 16.6,
+            "Sevilla": 11.7, "Zaragoza": 10.6, "Bizkaia": 14.6, "Baleares": 19.1,
+            // ... (El resto que ya tenías) ...
+            "Gipuzkoa": 16.3, "Las Palmas": 15.4, "Santa Cruz de Tenerife": 14.8
+        };
+
+        // --- FUNCIONES VISUALES (Loading) ---
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        // 4. LÓGICA DE NEGOCIO
+        function getRentLimit() {
+            const sal = parseFloat(document.getElementById('salary').value) || 0;
+            const limit = sal * 0.35;
+            document.getElementById('limitDisplay').textContent = limit.toFixed(0) + '€';
+            return limit;
+        }
+
+        function getColor(precio, limit) {
+            if (!precio) return '#94a3b8'; // Gris neutro moderno
+            const size = parseFloat(document.getElementById('size').value) || 60;
+            const coste = precio * size;
+            return coste <= limit ? '#10b981' : '#ef4444'; // Verde/Rojo vibrantes
+        }
+
+        function style(feature) {
+            const limit = getRentLimit();
+            let precio;
+
+            if (feature.properties.Texto) { // Provincia
+                precio = preciosProvincias[feature.properties.Texto];
+            } else if (feature.id) { // Municipio
+                const provName = document.getElementById('mainTitle').dataset.provincia;
+                const base = preciosProvincias[provName] || 8.0;
+                // Variación determinista basada en ID para que no parpadee
+                const variation = (parseInt(feature.id) % 20 - 10) / 10; 
+                precio = base + variation;
+            }
+
+            return { 
+                fillColor: getColor(precio, limit), 
+                weight: 1, 
+                opacity: 1, 
+                color: 'white', 
+                dashArray: '', 
+                fillOpacity: 0.7 
+            };
+        }
+
+        // 5. INTERACCIÓN Y POPUPS
+        function highlightFeature(e) {
+            const layer = e.target;
+            const props = layer.feature.properties;
+            const nombre = props.Texto || props.name || "Desconocido";
+            
+            let precioMostrar;
+            let esEstimado = false;
+
+            if (currentLevel === 'provincias') {
+                precioMostrar = preciosProvincias[nombre];
+            } else {
+                const prov = document.getElementById('mainTitle').dataset.provincia;
+                precioMostrar = preciosProvincias[prov];
+                esEstimado = true;
+            }
+
+            // HTML elegante para el status
+            const html = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600; font-size:1.1rem; color:var(--primary)">${nombre}</span>
+                    ${esEstimado ? '<span style="font-size:0.7rem; background:#f3f4f6; padding:2px 6px; border-radius:4px; color:#6b7280">Estimado</span>' : ''}
+                </div>
+                <div style="margin-top:4px;">
+                    <span style="font-size:1.4rem; font-weight:800; color:${getColor(precioMostrar, getRentLimit())}">
+                        ${precioMostrar ? precioMostrar + '<small style="font-size:0.9rem; color:#6b7280"> €/m²</small>' : 'Sin datos'}
+                    </span>
+                </div>
+            `;
+            
+            document.getElementById('statusText').innerHTML = html;
+
+            layer.setStyle({ weight: 3, color: '#333', fillOpacity: 0.9 });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+        }
+
+        function resetHighlight(e) {
+            const layer = e.target;
+            // Restaurar estilo original
+            if (currentLevel === 'provincias') geoLayer.resetStyle(layer);
+            else muniLayer.resetStyle(layer);
+            
+            // Mensaje por defecto
+            document.getElementById('statusText').innerHTML = '<span style="color: #6b7280">Pasa el ratón por una zona...</span>';
+        }
+
+        // --- ZOOM LÓGICO ---
+        async function clickFeature(e) {
+            const layer = e.target;
+            const nombre = layer.feature.properties.Texto;
+            const codigo = codigosINE[nombre];
+
+            if (codigo) {
+                console.log(`📍 Viajando a ${nombre}...`);
+                showLoading(true); // ¡Feedback visual!
+
+                // Limpieza anterior
+                if (muniLayer) map.removeLayer(muniLayer);
+                if (provinciaActivaLayer) {
+                    provinciaActivaLayer.setStyle({ opacity: 1, fillOpacity: 0.7, interactive: true });
+                }
+
+                // Setup nuevo estado
+                provinciaActivaLayer = layer;
+                currentLevel = 'municipios';
+                
+                const titleEl = document.getElementById('mainTitle');
+                titleEl.textContent = `📍 ${nombre}`;
+                titleEl.dataset.provincia = nombre;
+
+                // Ocultar provincia "padre"
+                layer.setStyle({ opacity: 0, fillOpacity: 0, interactive: false });
+
+                // Fetch Datos (Simulado un pequeño delay para que se vea el spinner si va muy rápido)
+                if (!topoData) {
+                    try {
+                        const r = await fetch('https://unpkg.com/es-atlas/es/municipalities.json');
+                        topoData = await r.json();
+                    } catch (err) { 
+                        alert("Error de conexión"); 
+                        showLoading(false);
+                        return; 
+                    }
+                }
+
+                // Procesar GeoJSON
+                const geojson = topojson.feature(topoData, topoData.objects.municipalities);
+                const filtrados = { 
+                    type: "FeatureCollection", 
+                    features: geojson.features.filter(f => f.id && String(f.id).startsWith(codigo)) 
+                };
+
+                // Pintar Municipios
+                muniLayer = L.geoJson(filtrados, {
+                    style: style,
+                    onEachFeature: (f, l) => { 
+                        l.on({ 
+                            mouseover: highlightFeature, 
+                            mouseout: resetHighlight 
+                        }); 
+                    }
+                }).addTo(map);
+
+                map.fitBounds(muniLayer.getBounds(), { padding: [50, 50] }); // Un poco de margen mola
+                showLoading(false); // Fin carga
+            }
+        }
+
+        // 6. INICIALIZACIÓN
+        geoLayer = L.geoJson(provinciasGeoJSON, {
+            style: style,
+            onEachFeature: (f, l) => { 
+                l.on({ 
+                    mouseover: highlightFeature, 
+                    mouseout: resetHighlight, 
+                    click: clickFeature 
+                }); 
+            }
+        }).addTo(map);
+
+        // Listeners Inputs
+        ['salary', 'size'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                getRentLimit(); // Actualizar texto límite
+                geoLayer.setStyle(style);
+                if (muniLayer) muniLayer.setStyle(style);
+            });
+        });
+
+        // Init calc
+        getRentLimit();
+
+    </script>
+</body>
+</html>
