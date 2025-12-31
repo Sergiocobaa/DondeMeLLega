@@ -38,93 +38,61 @@
     <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 
     <style>
-        /* --- ESTILOS BASE --- */
-        :root {
-            --primary: #111827;
-            --accent: #2563eb;
-            --surface: rgba(255, 255, 255, 0.95);
-            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15);
-        }
-
+        /* --- ESTILOS VISUALES --- */
+        :root { --primary: #111827; --accent: #2563eb; --surface: rgba(255, 255, 255, 0.95); --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15); }
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow: hidden; background: #e5e7eb; }
-        
         #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; z-index: 0; }
 
-        /* --- UI FLOTANTE --- */
-        .ui-container {
-            position: absolute;
-            top: 24px; left: 24px;
-            width: 360px;
-            z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
-        }
-
-        .card {
-            background: var(--surface);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 24px;
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(255,255,255,0.6);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
+        /* UI Flotante */
+        .ui-container { position: absolute; top: 24px; left: 24px; width: 360px; z-index: 1000; transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1); }
+        .card { background: var(--surface); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 24px; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.6); display: flex; flex-direction: column; gap: 16px; }
+        
         .card-header { cursor: pointer; }
-
-        .drag-handle {
-            width: 40px; height: 5px;
-            background: #e5e7eb;
-            border-radius: 10px;
-            margin: -10px auto 15px auto;
-            display: none;
-        }
-
+        .drag-handle { width: 40px; height: 5px; background: #e5e7eb; border-radius: 10px; margin: -10px auto 15px auto; display: none; }
+        
         h2 { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--primary); letter-spacing: -0.03em; }
         .subtitle { font-size: 0.875rem; color: #6b7280; display: block; margin-top: 4px;}
 
         /* Inputs */
         .input-group label { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #9ca3af; margin-bottom: 6px; letter-spacing: 0.05em; }
         .input-wrapper { position: relative; display: flex; align-items: center; }
-        input { width: 100%; padding: 12px 16px; border: 2px solid #f3f4f6; border-radius: 12px; font-size: 1rem; font-weight: 600; color: var(--primary); outline: none; transition: border 0.2s; font-family: 'Inter', sans-serif; }
-        input:focus { border-color: var(--accent); }
+        input[type="number"] { width: 100%; padding: 12px 16px; border: 2px solid #f3f4f6; border-radius: 12px; font-size: 1rem; font-weight: 600; color: var(--primary); outline: none; transition: border 0.2s; font-family: 'Inter', sans-serif; }
+        input[type="number"]:focus { border-color: var(--accent); }
         .suffix { position: absolute; right: 16px; color: #9ca3af; font-weight: 500; font-size: 0.9rem; pointer-events: none; }
+
+        /* SLIDER (NUEVO ESTILO) */
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 6px; background: #e5e7eb; border-radius: 5px; outline: none; margin-top: 5px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
 
         /* Status Box */
         .status-card { background: #f9fafb; border-radius: 16px; padding: 16px; border: 1px solid #f3f4f6; }
-        .limit-label { font-size: 0.8rem; color: #6b7280; font-weight: 500; }
         .limit-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: -0.03em; }
         #statusText { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 0.95rem; }
 
-        /* Footer Legal (NUEVO) */
-        .legal-footer {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 0.75rem;
-            color: #9ca3af;
-            border-top: 1px solid #f3f4f6;
-            padding-top: 15px;
-        }
-        .legal-footer a { color: #9ca3af; text-decoration: none; margin: 0 5px; transition: color 0.2s; }
-        .legal-footer a:hover { color: var(--accent); text-decoration: underline; }
-
+        /* Footer */
+        .legal-footer { margin-top: 10px; text-align: center; font-size: 0.75rem; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 15px; }
+        .legal-footer a { color: #9ca3af; text-decoration: none; margin: 0 5px; }
+        
         /* Spinner */
         #loading { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 15px 30px; border-radius: 50px; box-shadow: var(--shadow); z-index: 2000; font-weight: 600; color: var(--primary); gap: 10px; align-items: center; }
         .spinner { width: 18px; height: 18px; border: 2px solid #e5e7eb; border-top: 2px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- MÓVIL (BOTTOM SHEET) --- */
+        /* Botón Info SEO */
+        .info-btn { position: absolute; bottom: 20px; right: 20px; background: white; width: 40px; height: 40px; border-radius: 50%; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--accent); cursor: pointer; z-index: 998; }
+
+        /* Móvil */
         @media (max-width: 768px) {
             .ui-container { top: auto; bottom: 0; left: 0; width: 100%; }
             .card { border-radius: 24px 24px 0 0; padding-bottom: 40px; gap: 12px; }
             .drag-handle { display: block; background: #d1d5db; }
             .ui-container.collapsed { transform: translateY(calc(100% - 85px)); }
             .ui-container.collapsed .drag-handle { background: var(--accent); width: 50px; }
-            
-            /* Ocultar legal en móvil cuando está colapsado para no molestar */
-            .ui-container.collapsed .legal-footer { opacity: 0; pointer-events: none; }
+            .info-btn { bottom: 100px; right: 10px; } /* Mover botón info arriba en móvil */
         }
     </style>
 </head>
@@ -132,9 +100,23 @@
 
     <div id="loading"><div class="spinner"></div>Cargando...</div>
 
+    <div class="info-btn" onclick="document.getElementById('seo-modal').style.display='block'">?</div>
+
+    <div id="seo-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; backdrop-filter:blur(5px);">
+        <div style="background:white; max-width:500px; margin:50px auto; padding:30px; border-radius:20px; position:relative; max-height:80vh; overflow-y:auto;">
+            <button onclick="document.getElementById('seo-modal').style.display='none'" style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            <h2 style="margin-top:0;">Sobre PreciosAlquiler.es</h2>
+            <p><strong>¿Dónde puedes vivir con tu sueldo?</strong></p>
+            <p>Esta herramienta interactiva te ayuda a calcular tu capacidad de alquiler en España. Cruzamos los datos de mercado con tu salario neto.</p>
+            <h3>¿Cómo funciona el ratio de esfuerzo?</h3>
+            <p>Por defecto usamos el <strong>35%</strong> (recomendado por expertos), pero puedes usar la nueva barra deslizante para ajustar tu riesgo financiero desde el 10% hasta el 60%.</p>
+            <h3>Datos utilizados</h3>
+            <p>Utilizamos medias provinciales y datos de mercado actualizados para ofrecerte un mapa de calor en tiempo real.</p>
+        </div>
+    </div>
+
     <div class="ui-container" id="panelLateral">
         <div class="card">
-            
             <div class="card-header" onclick="togglePanel()">
                 <div class="drag-handle"></div>
                 <h2 id="mainTitle" data-provincia="">📍 España</h2>
@@ -142,7 +124,7 @@
             </div>
 
             <div class="input-group">
-                <label>Sueldo Neto</label>
+                <label>Sueldo Neto Mensual</label>
                 <div class="input-wrapper">
                     <input type="number" id="salary" value="1500" placeholder="0">
                     <span class="suffix">€</span>
@@ -150,66 +132,48 @@
             </div>
 
             <div class="input-group">
-                <label>Metros²</label>
+                <label>Tamaño piso deseado</label>
                 <div class="input-wrapper">
                     <input type="number" id="size" value="60" placeholder="0">
                     <span class="suffix">m²</span>
                 </div>
             </div>
 
+            <div class="input-group">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <label style="margin:0;">Esfuerzo Máximo</label>
+                    <span id="ratioLabel" style="font-weight:700; color:var(--accent); font-size:0.9rem;">35%</span>
+                </div>
+                <input type="range" id="ratio" min="10" max="60" value="35" step="1">
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#9ca3af; margin-top:2px;">
+                    <span>Conservador</span>
+                    <span>Arriesgado</span>
+                </div>
+            </div>
+
             <div class="status-card">
                 <div style="display:flex; justify-content:space-between; align-items:baseline;">
-                    <div class="limit-label">Tu tope (35%)</div>
+                    <div style="font-size:0.8rem; color:#6b7280; font-weight:500;">Tu alquiler máx.</div>
                     <div id="limitDisplay" class="limit-value">525€</div>
                 </div>
                 <div id="statusText"><span style="color:#9ca3af">Explora el mapa...</span></div>
             </div>
 
-            <div class="legal-footer">
-                <a href="privacidad.html" target="_blank">Privacidad</a> • 
-                <a href="cookies.html" target="_blank">Cookies</a> • 
-                <span style="cursor:help" title="Datos estimados basados en Idealista 2025">© 2025</span>
-            </div>
+            <div style="margin-top: 15px; min-height: 250px; background: #f9fafb; border-radius: 12px; display:flex; align-items:center; justify-content:center;">
+                <span style="font-size:10px; color:#ccc;">Espacio Publicidad</span>
+                </div>
 
+            <div class="legal-footer">
+                <a href="privacidad.html" target="_blank">Privacidad</a> • <a href="cookies.html" target="_blank">Cookies</a>
+            </div>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div id="seo-content" style="
-    position: absolute; 
-    bottom: 20px; 
-    right: 20px; 
-    width: 350px; 
-    background: white; 
-    padding: 20px; 
-    border-radius: 16px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-    z-index: 999; 
-    font-size: 0.9rem; 
-    color: #333;
-    max-height: 400px;
-    overflow-y: auto;
-    display: block;">
-    
-    <button onclick="document.getElementById('seo-content').style.display='none'" style="float:right; border:none; background:none; cursor:pointer; font-size:1.2rem;">✖</button>
-    
-    <h3 style="margin-top:0; color:#2563eb;">Sobre PreciosAlquiler.es</h3>
-    
-    <p><strong>¿Dónde puedes vivir con tu sueldo?</strong></p>
-    <p>Esta herramienta interactiva cruza los datos del mercado inmobiliario actual en España con tus ingresos netos mensuales. Aplicando la <strong>regla financiera del 35%</strong> (recomendación del Banco de España), calculamos en tiempo real qué municipios son viables para tu economía.</p>
-    
-    <h4>Metodología de cálculo</h4>
-    <p>Utilizamos datos actualizados de precios por metro cuadrado (m²) en las 50 provincias españolas. El algoritmo determina si el coste de un alquiler estándar (según los metros cuadrados que selecciones) supera o no el límite de endeudamiento saludable.</p>
-    
-    <h4>Datos de Alquiler 2025</h4>
-    <p>Analizamos la viabilidad en zonas de alta demanda como <em>Madrid, Barcelona, Valencia, Málaga</em> y sus áreas metropolitanas, permitiéndote descubrir "zonas verdes" (asequibles) en el mapa de calor.</p>
-</div>
-
     <script src="provincias.js"></script>
-
     <script>
-        // --- ACORDEÓN ---
+        // --- LOGICA UI ---
         function togglePanel() {
             if (window.innerWidth < 768) {
                 document.getElementById('panelLateral').classList.toggle('collapsed');
@@ -218,30 +182,17 @@
 
         // --- MAPA SETUP ---
         const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([40.416775, -3.703790], 6);
-        L.control.zoom({ position: 'topright' }).addTo(map); 
+        L.control.zoom({ position: 'topright' }).addTo(map);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '©CartoDB' }).addTo(map);
 
         let geoLayer, muniLayer, topoData, currentLevel = 'provincias', provinciaActivaLayer;
 
-        // DICCIONARIO INE (¡IMPORTANTE: COMPLETO!)
-        const codigosINE = {
-            "Araba/Álava": "01", "Álava": "01", "Albacete": "02", "Alicante/Alacant": "03", "Alicante": "03",
-            "Almería": "04", "Ávila": "05", "Badajoz": "06", "Illes Balears": "07", "Baleares": "07",
-            "Barcelona": "08", "Burgos": "09", "Cáceres": "10", "Cádiz": "11",
-            "Castellón/Castelló": "12", "Castellón": "12", "Ciudad Real": "13", "Córdoba": "14",
-            "A Coruña": "15", "La Coruña": "15", "Cuenca": "16", "Girona": "17", "Gerona": "17",
-            "Granada": "18", "Guadalajara": "19", "Gipuzkoa": "20", "Guipúzcoa": "20",
-            "Huelva": "21", "Huesca": "22", "Jaén": "23", "León": "24", "Lleida": "25", "Lérida": "25",
-            "La Rioja": "26", "Lugo": "27", "Madrid": "28", "Málaga": "29", "Murcia": "30",
-            "Navarra": "31", "Ourense": "32", "Orense": "32", "Asturias": "33", "Palencia": "34",
-            "Las Palmas": "35", "Pontevedra": "36", "Salamanca": "37", "Santa Cruz de Tenerife": "38",
-            "Cantabria": "39", "Segovia": "40", "Sevilla": "41", "Soria": "42", "Tarragona": "43",
-            "Teruel": "44", "Toledo": "45", "Valencia/Valéncia": "46", "Valencia": "46",
-            "Valladolid": "47", "Bizkaia": "48", "Vizcaya": "48", "Zamora": "49", "Zaragoza": "50",
-            "Ceuta": "51", "Melilla": "52"
-        };
+        // DICCIONARIO INE
+        const codigosINE = { "Araba/Álava": "01", "Álava": "01", "Albacete": "02", "Alicante/Alacant": "03", "Alicante": "03", "Almería": "04", "Ávila": "05", "Badajoz": "06", "Illes Balears": "07", "Baleares": "07", "Barcelona": "08", "Burgos": "09", "Cáceres": "10", "Cádiz": "11", "Castellón/Castelló": "12", "Castellón": "12", "Ciudad Real": "13", "Córdoba": "14", "A Coruña": "15", "La Coruña": "15", "Cuenca": "16", "Girona": "17", "Gerona": "17", "Granada": "18", "Guadalajara": "19", "Gipuzkoa": "20", "Guipúzcoa": "20", "Huelva": "21", "Huesca": "22", "Jaén": "23", "León": "24", "Lleida": "25", "Lérida": "25", "La Rioja": "26", "Lugo": "27", "Madrid": "28", "Málaga": "29", "Murcia": "30", "Navarra": "31", "Ourense": "32", "Orense": "32", "Asturias": "33", "Palencia": "34", "Las Palmas": "35", "Pontevedra": "36", "Salamanca": "37", "Santa Cruz de Tenerife": "38", "Cantabria": "39", "Segovia": "40", "Sevilla": "41", "Soria": "42", "Tarragona": "43", "Teruel": "44", "Toledo": "45", "Valencia/Valéncia": "46", "Valencia": "46", "Valladolid": "47", "Bizkaia": "48", "Vizcaya": "48", "Zamora": "49", "Zaragoza": "50", "Ceuta": "51", "Melilla": "52" };
 
-        // PRECIOS (¡PEGA TU LISTA COMPLETA AQUÍ!)
+        // PRECIOS (PEGA TU LISTA COMPLETA)
+
+                // PRECIOS (¡PEGA TU LISTA COMPLETA AQUÍ!)
                const preciosProvincias = {
   // --- ANDALUCÍA ---
   "Almería": 8.4,
@@ -290,7 +241,7 @@
 
   // --- CATALUÑA ---
   "Barcelona": 20.6,
-  "Girona": 12.7,
+  "Gerona": 12.7,
   "Lleida": 11.0,
   "Tarragona": 9.9,
 
@@ -304,14 +255,14 @@
   "Cáceres": 7.3,
 
   // --- GALICIA ---
-  "A Coruña": 9.3,
+  "La Coruña": 9.3,
   "Lugo": 7.4,
-  "Ourense": 7.4,
+  "Orense": 7.4,
   "Pontevedra": 9.9,
 
   // --- ISLAS ---
   "Baleares": 19.1,    // A veces es "Illes Balears" en GeoJSON
-  "Illes Balears": 19.1,
+  "Islas Baleares": 19.1,
   "Las Palmas": 15.4,
   "Santa Cruz de Tenerife": 14.8,
 
@@ -321,14 +272,17 @@
   "Ceuta": 13.9,
   "Melilla": 10.3
 };
-
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'flex' : 'none';
-        }
-
+        // --- CÁLCULOS DINÁMICOS (CON SLIDER) ---
         function getRentLimit() {
             const sal = parseFloat(document.getElementById('salary').value) || 0;
-            const limit = sal * 0.35;
+            // NUEVO: Leemos el slider
+            const ratioPercent = parseInt(document.getElementById('ratio').value) || 35;
+            
+            // Actualizamos etiqueta visual
+            document.getElementById('ratioLabel').innerText = ratioPercent + '%';
+            
+            // Cálculo
+            const limit = sal * (ratioPercent / 100);
             document.getElementById('limitDisplay').innerText = limit.toFixed(0) + '€';
             return limit;
         }
@@ -371,10 +325,9 @@
                         ${pShow ? pShow + '<small style="font-size:0.9rem; color:#6b7280"> €/m²</small>' : 'Sin datos'}
                     </span>
                 </div>`;
-            
             document.getElementById('statusText').innerHTML = html;
             e.target.setStyle({ weight: 3, color: '#333', fillOpacity: 0.9 });
-            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) e.target.bringToFront();
+            e.target.bringToFront();
         }
 
         function resetHighlight(e) {
@@ -391,7 +344,7 @@
 
             if(codigo) {
                 if(window.innerWidth < 768) document.getElementById('panelLateral').classList.add('collapsed');
-                showLoading(true);
+                document.getElementById('loading').style.display = 'flex';
                 
                 if(muniLayer) map.removeLayer(muniLayer);
                 if(provinciaActivaLayer) provinciaActivaLayer.setStyle({ opacity: 1, fillOpacity: 0.7, interactive: true });
@@ -413,6 +366,7 @@
                 }
 
                 const geojson = topojson.feature(topoData, topoData.objects.municipalities);
+                // FIX: Comprobamos f.id antes de usar startsWith
                 const feats = { type: "FeatureCollection", features: geojson.features.filter(f => f.id && String(f.id).startsWith(codigo)) };
 
                 muniLayer = L.geoJson(feats, {
@@ -421,7 +375,7 @@
                 }).addTo(map);
 
                 map.fitBounds(muniLayer.getBounds(), { padding: [20, 20] });
-                showLoading(false);
+                document.getElementById('loading').style.display = 'none';
             }
         }
 
@@ -430,13 +384,14 @@
             onEachFeature: (f, l) => l.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: clickFeature })
         }).addTo(map);
 
-        ['salary', 'size'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+        // LISTENERS (Ahora incluido el slider 'ratio')
+        ['salary', 'size', 'ratio'].forEach(id => document.getElementById(id).addEventListener('input', () => {
             getRentLimit();
             geoLayer.setStyle(style);
             if(muniLayer) muniLayer.setStyle(style);
         }));
         
-        getRentLimit();
+        getRentLimit(); // Init
     </script>
 </body>
 </html>
