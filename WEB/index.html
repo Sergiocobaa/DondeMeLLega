@@ -94,6 +94,57 @@
             .ui-container.collapsed .drag-handle { background: var(--accent); width: 50px; }
             .info-btn { bottom: 100px; right: 10px; } /* Mover botón info arriba en móvil */
         }
+
+        /* --- ESTILOS DEL BUSCADOR --- */
+        #searchInput {
+            width: 100%;
+            padding: 12px 12px 12px 40px; /* Hueco para la lupa */
+            border: 2px solid #f3f4f6;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            background: #f9fafb;
+            transition: all 0.2s;
+            box-sizing: border-box; /* Importante para que no se salga */
+        }
+
+        #searchInput:focus {
+            border-color: var(--accent);
+            background: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        .results-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-top: 8px;
+            padding: 0;
+            list-style: none;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 2000;
+            display: none; /* Oculto por defecto */
+            border: 1px solid #e5e7eb;
+        }
+
+        .results-list li {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .results-list li:last-child { border-bottom: none; }
+        .results-list li:hover { background: #f0f9ff; color: var(--accent); }
+        .results-list li small { color: #9ca3af; font-size: 0.75rem; }
     </style>
 </head>
 <body>
@@ -102,21 +153,43 @@
 
     <div class="info-btn" onclick="document.getElementById('seo-modal').style.display='block'">?</div>
 
-    <div id="seo-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; backdrop-filter:blur(5px);">
-        <div style="background:white; max-width:500px; margin:50px auto; padding:30px; border-radius:20px; position:relative; max-height:80vh; overflow-y:auto;">
-            <button onclick="document.getElementById('seo-modal').style.display='none'" style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            <h2 style="margin-top:0;">Sobre PreciosAlquiler.es</h2>
-            <p><strong>¿Dónde puedes vivir con tu sueldo?</strong></p>
-            <p>Esta herramienta interactiva te ayuda a calcular tu capacidad de alquiler en España. Cruzamos los datos de mercado con tu salario neto.</p>
-            <h3>¿Cómo funciona el ratio de esfuerzo?</h3>
-            <p>Por defecto usamos el <strong>35%</strong> (recomendado por expertos), pero puedes usar la nueva barra deslizante para ajustar tu riesgo financiero desde el 10% hasta el 60%.</p>
-            <h3>Datos utilizados</h3>
-            <p>Utilizamos medias provinciales y datos de mercado actualizados para ofrecerte un mapa de calor en tiempo real.</p>
+    <div id="seo-modal" style="display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; backdrop-filter:blur(5px); align-items:center; justify-content:center;">
+        <div style="background:white; max-width:500px; width:90%; padding:30px; border-radius:24px; position:relative; max-height:80vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+            
+            <button onclick="cerrarModal()" style="position:absolute; top:15px; right:15px; border:none; background:#f3f4f6; width:30px; height:30px; border-radius:50%; font-size:1.2rem; cursor:pointer; color:#374151;">&times;</button>
+            
+            <h2 style="margin-top:0; color:#111827;">🏠 ¿Dónde te llega el sueldo?</h2>
+            
+            <p style="color:#4b5563; line-height:1.6;">Esta herramienta cruza los datos oficiales del alquiler en España con tu salario neto.</p>
+            
+            <div style="background:#eff6ff; padding:15px; border-radius:12px; margin:15px 0;">
+                <h3 style="margin:0 0 10px 0; color:#1e40af; font-size:1rem;">ℹ️ Cómo funciona</h3>
+                <ul style="margin:0; padding-left:20px; color:#1e3a8a; font-size:0.9rem;">
+                    <li>Introduce tu <strong>Sueldo Neto</strong>.</li>
+                    <li>El mapa se coloreará según la <strong>Regla del 35%</strong>.</li>
+                    <li>Verde = Puedes pagarlo. Rojo = Riesgo.</li>
+                </ul>
+            </div>
+
+            <p style="font-size:0.8rem; color:#9ca3af; margin-top:20px;">
+                Datos basados en el Sistema Estatal de Referencia (MIVAU) y precios de mercado actuales.
+            </p>
+
+            <button onclick="cerrarModal()" style="width:100%; background:#2563eb; color:white; border:none; padding:12px; border-radius:12px; font-weight:600; font-size:1rem; cursor:pointer; margin-top:10px;">
+                Ver Mapa
+            </button>
         </div>
     </div>
 
     <div class="ui-container" id="panelLateral">
-        <div class="card">
+            <div class="card">
+                        <div class="search-container" style="position: relative; margin-bottom: 10px;">
+                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.5;">🔍</span>
+                
+                <input type="text" id="searchInput" placeholder="Buscar municipio..." autocomplete="off">
+                
+                <ul id="searchResults" class="results-list"></ul>
+            </div>
             <div class="card-header" onclick="togglePanel()">
                 <div class="drag-handle"></div>
                 <h2 id="mainTitle" data-provincia="">📍 España</h2>
@@ -159,9 +232,9 @@
                 <div id="statusText"><span style="color:#9ca3af">Explora el mapa...</span></div>
             </div>
 
-            <!-- <div style="margin-top: 15px; min-height: 250px; background: #f9fafb; border-radius: 12px; display:flex; align-items:center; justify-content:center;">
+            <div style="margin-top: 15px; min-height: 250px; background: #f9fafb; border-radius: 12px; display:flex; align-items:center; justify-content:center;">
                 <span style="font-size:10px; color:#ccc;">Espacio Publicidad</span>
-                </div> -->
+                </div>
 
             <div class="legal-footer">
                 <a href="privacidad.html" target="_blank">Privacidad</a> • <a href="cookies.html" target="_blank">Cookies</a>
@@ -172,8 +245,12 @@
     <div id="map"></div>
 
     <script src="provincias.js"></script>
+    <script src="datos_mivau.js"></script>
     <script>
-        // --- LOGICA UI ---
+        function cerrarModal() {
+            document.getElementById('seo-modal').style.display = 'none';
+        }
+        // --- LOGICA UI (Panel y Slider) ---
         function togglePanel() {
             if (window.innerWidth < 768) {
                 document.getElementById('panelLateral').classList.toggle('collapsed');
@@ -187,147 +264,90 @@
 
         let geoLayer, muniLayer, topoData, currentLevel = 'provincias', provinciaActivaLayer;
 
-        // DICCIONARIO INE
+        // DICCIONARIO INE (Para saber qué provincia se clica)
         const codigosINE = { "Araba/Álava": "01", "Álava": "01", "Albacete": "02", "Alicante/Alacant": "03", "Alicante": "03", "Almería": "04", "Ávila": "05", "Badajoz": "06", "Illes Balears": "07", "Baleares": "07", "Barcelona": "08", "Burgos": "09", "Cáceres": "10", "Cádiz": "11", "Castellón/Castelló": "12", "Castellón": "12", "Ciudad Real": "13", "Córdoba": "14", "A Coruña": "15", "La Coruña": "15", "Cuenca": "16", "Girona": "17", "Gerona": "17", "Granada": "18", "Guadalajara": "19", "Gipuzkoa": "20", "Guipúzcoa": "20", "Huelva": "21", "Huesca": "22", "Jaén": "23", "León": "24", "Lleida": "25", "Lérida": "25", "La Rioja": "26", "Lugo": "27", "Madrid": "28", "Málaga": "29", "Murcia": "30", "Navarra": "31", "Ourense": "32", "Orense": "32", "Asturias": "33", "Palencia": "34", "Las Palmas": "35", "Pontevedra": "36", "Salamanca": "37", "Santa Cruz de Tenerife": "38", "Cantabria": "39", "Segovia": "40", "Sevilla": "41", "Soria": "42", "Tarragona": "43", "Teruel": "44", "Toledo": "45", "Valencia/Valéncia": "46", "Valencia": "46", "Valladolid": "47", "Bizkaia": "48", "Vizcaya": "48", "Zamora": "49", "Zaragoza": "50", "Ceuta": "51", "Melilla": "52" };
 
-        // PRECIOS (PEGA TU LISTA COMPLETA)
+        // PRECIOS BASE PROVINCIAS (Fallback si falla MIVAU)
+        // Actualiza esto con los datos de Idealista de este mes para las provincias
+        const preciosProvincias = { "Barcelona": 20.6, "Madrid": 21.0, "Valencia": 13.5, "Málaga": 16.6, "Sevilla": 11.7, "Zaragoza": 10.6, "Bizkaia": 14.6, "Baleares": 19.1, "Gipuzkoa": 16.3, "Las Palmas": 15.4, "Santa Cruz de Tenerife": 14.8, "Murcia": 8.5, "Alicante": 11.0, "Asturias": 9.2 };
 
-                // PRECIOS (¡PEGA TU LISTA COMPLETA AQUÍ!)
-               const preciosProvincias = {
-  // --- ANDALUCÍA ---
-  "Almería": 8.4,
-  "Cádiz": 10.1,
-  "Córdoba": 8.5,
-  "Granada": 9.8,
-  "Huelva": 8.7,
-  "Jaén": 6.4,
-  "Málaga": 16.6,
-  "Sevilla": 11.7,
-  
-  // --- ARAGÓN ---
-  "Huesca": 9.4,
-  "Teruel": 7.4,
-  "Zaragoza": 10.6,
-  
-  // --- NORTE ---
-  "Asturias": 10.0,
-  "Cantabria": 10.8,
-  "La Rioja": 8.9,
-  "Navarra": 10.7,
-  "Bizkaia": 14.6,     // En Idealista sale como Vizcaya, ajusta según tu GeoJSON
-  "Gipuzkoa": 16.3,    // En Idealista sale como Guipúzcoa
-  "Araba": 12.3,       // En Idealista sale como Álava
-  "Vizcaya": 14.6,     // Te pongo ambos por si acaso
-  "Guipúzcoa": 16.3,
-  "Álava": 12.3,
-
-  // --- CASTILLA Y LEÓN ---
-  "Ávila": 7.7,
-  "Burgos": 9.0,
-  "León": 7.8,
-  "Palencia": 7.8,
-  "Salamanca": 9.5,
-  "Segovia": 11.8,
-  "Soria": 8.1,
-  "Valladolid": 9.1,
-  "Zamora": 7.2,
-
-  // --- CASTILLA-LA MANCHA ---
-  "Albacete": 8.0,
-  "Ciudad Real": 7.0,
-  "Cuenca": 7.6,
-  "Guadalajara": 9.8,
-  "Toledo": 8.5,
-
-  // --- CATALUÑA ---
-  "Barcelona": 20.6,
-  "Gerona": 12.7,
-  "Lleida": 11.0,
-  "Tarragona": 9.9,
-
-  // --- COMUNIDAD VALENCIANA ---
-  "Alicante": 11.9,    // Idealista: Alicante/Alacant
-  "Castellón": 8.6,    // Idealista: Castellón/Castelló
-  "Valencia": 13.5,    // Idealista: Valencia/Valéncia
-
-  // --- EXTREMADURA ---
-  "Badajoz": 7.2,
-  "Cáceres": 7.3,
-
-  // --- GALICIA ---
-  "La Coruña": 9.3,
-  "Lugo": 7.4,
-  "Orense": 7.4,
-  "Pontevedra": 9.9,
-
-  // --- ISLAS ---
-  "Baleares": 19.1,    // A veces es "Illes Balears" en GeoJSON
-  "Islas Baleares": 19.1,
-  "Las Palmas": 15.4,
-  "Santa Cruz de Tenerife": 14.8,
-
-  // --- OTROS ---
-  "Madrid": 21.0,
-  "Murcia": 8.8,
-  "Ceuta": 13.9,
-  "Melilla": 10.3
-};
-        // --- CÁLCULOS DINÁMICOS (CON SLIDER) ---
+        // --- CÁLCULOS ---
         function getRentLimit() {
             const sal = parseFloat(document.getElementById('salary').value) || 0;
-            // NUEVO: Leemos el slider
             const ratioPercent = parseInt(document.getElementById('ratio').value) || 35;
             
-            // Actualizamos etiqueta visual
             document.getElementById('ratioLabel').innerText = ratioPercent + '%';
             
-            // Cálculo
             const limit = sal * (ratioPercent / 100);
             document.getElementById('limitDisplay').innerText = limit.toFixed(0) + '€';
             return limit;
         }
 
         function getColor(p, l) {
-            if(!p) return '#cbd5e1';
+            if(!p) return '#cbd5e1'; // Gris si no hay datos
             const s = parseFloat(document.getElementById('size').value) || 60;
-            return (p * s) <= l ? '#10b981' : '#ef4444';
+            return (p * s) <= l ? '#10b981' : '#ef4444'; // Verde vs Rojo
+        }
+
+        // --- FUNCIÓN CLAVE: OBTENER PRECIO ---
+        function getPrecioZona(feature) {
+            // 1. NIVEL MUNICIPIO (Buscamos por ID en MIVAU)
+            if (feature.id && typeof preciosMIVAU !== 'undefined') {
+                // Convertimos a string y aseguramos 5 dígitos (por si acaso el mapa trae numero)
+                let codigo = String(feature.id);
+                if(codigo.length === 4) codigo = "0" + codigo; 
+
+                const precioOficial = preciosMIVAU[codigo];
+                if (precioOficial) return precioOficial;
+            }
+
+            // 2. NIVEL PROVINCIA O FALLBACK (Usamos nombre)
+            const nombre = feature.properties.Texto || feature.properties.name;
+            if (preciosProvincias[nombre]) return preciosProvincias[nombre];
+            
+            // 3. MEDIA GENERAL DE LA PROVINCIA ACTIVA
+            const provActual = document.getElementById('mainTitle').dataset.provincia;
+            return preciosProvincias[provActual] || 8.0;
         }
 
         function style(f) {
-            let p;
-            if(f.properties.Texto) p = preciosProvincias[f.properties.Texto];
-            else {
-                const base = preciosProvincias[document.getElementById('mainTitle').dataset.provincia] || 8;
-                p = base + ((parseInt(f.id)%20 - 10)/10);
-            }
-            return { fillColor: getColor(p, getRentLimit()), weight: 1, opacity: 1, color: 'white', fillOpacity: 0.7 };
+            const limit = getRentLimit();
+            const precio = getPrecioZona(f);
+            return { fillColor: getColor(precio, limit), weight: 1, opacity: 1, color: 'white', fillOpacity: 0.7 };
         }
 
         function highlightFeature(e) {
-            const props = e.target.feature.properties;
+            const layer = e.target;
+            const props = layer.feature.properties;
             const name = props.Texto || props.name || "Zona";
-            let pShow;
-            let esEstimado = false;
-
-            if(currentLevel === 'provincias') pShow = preciosProvincias[name];
-            else {
-                pShow = preciosProvincias[document.getElementById('mainTitle').dataset.provincia];
-                esEstimado = true;
+            const precio = getPrecioZona(layer.feature);
+            
+            // Detectar fuente del dato para la etiqueta
+            let esOficial = false;
+            if(layer.feature.id && typeof preciosMIVAU !== 'undefined') {
+                let codigo = String(layer.feature.id);
+                if(codigo.length === 4) codigo = "0" + codigo;
+                if(preciosMIVAU[codigo]) esOficial = true;
             }
+
+            const etiquetaFuente = esOficial 
+                ? '<span style="font-size:0.6rem; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; margin-left:8px;">Oficial MIVAU</span>' 
+                : '<span style="font-size:0.6rem; background:#f3f4f6; color:#6b7280; padding:2px 6px; border-radius:4px; margin-left:8px;">Estimado Prov.</span>';
 
             const html = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-weight:600; font-size:1.1rem; color:var(--primary)">${name}</span>
-                    ${esEstimado ? '<span style="font-size:0.7rem; background:#f3f4f6; padding:2px 6px; border-radius:4px; color:#6b7280">Estimado</span>' : ''}
                 </div>
-                <div style="margin-top:4px;">
-                    <span style="font-size:1.4rem; font-weight:800; color:${getColor(pShow, getRentLimit())}">
-                        ${pShow ? pShow + '<small style="font-size:0.9rem; color:#6b7280"> €/m²</small>' : 'Sin datos'}
+                <div style="margin-top:4px; display:flex; align-items:baseline;">
+                    <span style="font-size:1.4rem; font-weight:800; color:${getColor(precio, getRentLimit())}">
+                        ${precio ? precio.toFixed(1) + '<small style="font-size:0.9rem; color:#6b7280"> €/m²</small>' : 'S/D'}
                     </span>
+                    ${etiquetaFuente}
                 </div>`;
+            
             document.getElementById('statusText').innerHTML = html;
-            e.target.setStyle({ weight: 3, color: '#333', fillOpacity: 0.9 });
-            e.target.bringToFront();
+            layer.setStyle({ weight: 3, color: '#333', fillOpacity: 0.9 });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
         }
 
         function resetHighlight(e) {
@@ -362,11 +382,11 @@
                     try {
                         const r = await fetch('https://unpkg.com/es-atlas/es/municipalities.json');
                         topoData = await r.json();
-                    } catch(e) { alert("Error red"); return; }
+                    } catch(e) { alert("Error cargando mapa"); return; }
                 }
 
                 const geojson = topojson.feature(topoData, topoData.objects.municipalities);
-                // FIX: Comprobamos f.id antes de usar startsWith
+                // FILTRO SEGURO (El arreglo que hicimos antes)
                 const feats = { type: "FeatureCollection", features: geojson.features.filter(f => f.id && String(f.id).startsWith(codigo)) };
 
                 muniLayer = L.geoJson(feats, {
@@ -379,19 +399,164 @@
             }
         }
 
+        // CARGA INICIAL
         geoLayer = L.geoJson(provinciasGeoJSON, {
             style: style,
             onEachFeature: (f, l) => l.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: clickFeature })
         }).addTo(map);
 
-        // LISTENERS (Ahora incluido el slider 'ratio')
         ['salary', 'size', 'ratio'].forEach(id => document.getElementById(id).addEventListener('input', () => {
             getRentLimit();
             geoLayer.setStyle(style);
             if(muniLayer) muniLayer.setStyle(style);
         }));
         
-        getRentLimit(); // Init
+        getRentLimit();
+
+        // --- LÓGICA DEL BUSCADOR ---
+        let searchIndex = []; // Aquí guardaremos los 8.000 pueblos
+
+        // 1. Cargar la base de datos de nombres (solo una vez)
+        async function initSearch() {
+            try {
+                // Reusamos el archivo que ya usa el mapa
+                if(!topoData) {
+                    const r = await fetch('https://unpkg.com/es-atlas/es/municipalities.json');
+                    topoData = await r.json();
+                }
+                
+                // Convertimos TopoJSON a lista simple para buscar rápido
+                const geojson = topojson.feature(topoData, topoData.objects.municipalities);
+                searchIndex = geojson.features.map(f => ({
+                    name: f.properties.name,
+                    id: f.id, // Código INE (ej: 28079)
+                    // Guardamos coordenadas del centro para hacer zoom directo
+                    // (Leaflet/TopoJSON no da centro directo fácil, usaremos bounds luego)
+                    feature: f 
+                }));
+                
+                console.log("Buscador listo: " + searchIndex.length + " municipios indexados.");
+            } catch(e) { console.error("Error iniciando buscador", e); }
+        }
+
+        // Llamamos a esto al arrancar la web
+        initSearch();
+
+        // 2. Escuchar lo que escribe el usuario
+        const input = document.getElementById('searchInput');
+        const resultsList = document.getElementById('searchResults');
+
+        input.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            if(term.length < 3) { // No buscar si escribe poco
+                resultsList.style.display = 'none';
+                return;
+            }
+
+            // Filtramos (Máximo 10 resultados para no saturar)
+            const matches = searchIndex.filter(item => {
+                const normName = item.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                return normName.includes(term);
+            }).slice(0, 8);
+
+            renderResults(matches);
+        });
+        function getNombreProvincia(codigoINE) {
+            const prefijo = String(codigoINE).padStart(5, '0').substring(0, 2);
+            // Buscamos en tu diccionario codigosINE qué provincia tiene ese número
+            // Preferimos nombres cortos (ej: "Valencia" mejor que "Valencia/Valéncia")
+            return Object.keys(codigosINE).find(key => codigosINE[key] === prefijo && !key.includes('/')) 
+                || Object.keys(codigosINE).find(key => codigosINE[key] === prefijo) 
+                || "España";
+        }
+        // 3. Mostrar la lista
+        function renderResults(matches) {
+            resultsList.innerHTML = '';
+            
+            if(matches.length === 0) {
+                resultsList.style.display = 'none';
+                return;
+            }
+
+            matches.forEach(m => {
+                const li = document.createElement('li');
+                
+                // TRUCO: Sacamos el nombre de la provincia usando el código INE
+                const nombreProv = getNombreProvincia(m.id);
+                
+                // HTML más limpio: Nombre Pueblo (Provincia)
+                li.innerHTML = `
+                    <span style="font-weight:500">${m.name}</span> 
+                    <small style="color:#2563eb; background:#eff6ff; padding:2px 8px; border-radius:10px;">${nombreProv}</small>
+                `;
+                
+                li.onclick = () => selectMunicipio(m);
+                resultsList.appendChild(li);
+            });
+            
+            resultsList.style.display = 'block';
+        }
+        // 4. Qué pasa al hacer clic en un pueblo
+        function selectMunicipio(item) {
+            // A. Limpiamos buscador
+            input.value = item.name;
+            resultsList.style.display = 'none';
+
+            // B. Lógica de Mapa (Reusamos tu lógica existente)
+            // 1. Detectar provincia (primeros 2 dígitos del ID)
+            const codProv = String(item.id).substring(0, 2); 
+            // 2. Cargar esa capa de municipios si no está cargada
+            
+            document.getElementById('loading').style.display = 'flex';
+
+            // Borramos capa anterior
+            if(muniLayer) map.removeLayer(muniLayer);
+            
+            // Filtramos solo los municipios de esa provincia (para no cargar España entera)
+            const geojson = topojson.feature(topoData, topoData.objects.municipalities);
+            const featsProvincia = { 
+                type: "FeatureCollection", 
+                features: geojson.features.filter(f => f.id && String(f.id).startsWith(codProv)) 
+            };
+
+            // Pintamos la provincia entera
+            muniLayer = L.geoJson(featsProvincia, {
+                style: style,
+                onEachFeature: (f, l) => l.on({ mouseover: highlightFeature, mouseout: resetHighlight })
+            }).addTo(map);
+
+            // C. ZOOM AL MUNICIPIO ESPECÍFICO
+            // Buscamos el layer específico del pueblo que hemos clicado
+            const layerPueblo = muniLayer.getLayers().find(l => l.feature.id === item.id);
+            
+            if(layerPueblo) {
+                // Animación de viaje
+                map.flyToBounds(layerPueblo.getBounds(), { padding: [100, 100], duration: 1.5 });
+                
+                // Simulamos que el usuario pasó el ratón para ver el precio
+                highlightFeature({ target: layerPueblo });
+                
+                // Actualizamos título del panel
+                const t = document.getElementById('mainTitle');
+                t.innerText = `📍 ${item.name}`;
+                
+                // En móvil, colapsamos el panel para ver el mapa
+                if(window.innerWidth < 768) {
+                    document.getElementById('panelLateral').classList.add('collapsed');
+                }
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            currentLevel = 'municipios';
+        }
+
+        // Cerrar lista si clicas fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                resultsList.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
